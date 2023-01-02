@@ -37,6 +37,7 @@ export class News extends Component {
         document.title=`${this.capitalfirstletter(this.props.category)} - NewsMonkey`;
     }
     async UpdateNews(){
+        
         if (this.count) {
              console.log('page length'+this.state.page)
 
@@ -68,15 +69,20 @@ export class News extends Component {
 
     }
     async componentDidMount(){
+        this.props.setprogress(10);
         
         let url=`https://newsapi.org/v2/top-headlines?country=${this.props.country}&category=${this.props.category}&apiKey=a30a50bf99c249e1a721dd957caf55a8&page=1&pageSize=${this.props.pageSize}`;
         this.setState({loading:true})
 
         let data= await fetch(url)
+        this.props.setprogress(60);
+
         let parsedData=await data.json()
         console.log(parsedData);
         this.setState({articles:parsedData.articles,totalResults:parsedData.totalResults,loading:false})
         // we can also call the function update news but for understandig purpsose didn't call it
+        this.props.setprogress(100);
+
     }
 
     handlePrevClick= async()=>{
@@ -108,14 +114,19 @@ export class News extends Component {
         // this.setState({search:true})
         console.log(this.props.pageSize)
         console.log('page length'+this.state.page)
+        this.props.setprogress(10);
         
         let url=`https://newsapi.org/v2/everything?q=${inputVal}&apiKey=a30a50bf99c249e1a721dd957caf55a8&page=${this.state.page}&pagesize=${this.props.pageSize}`;
         this.setState({loading:true})
 
         let data= await fetch(url)
+        this.props.setprogress(60);
+
         let parsedData=await data.json()
         console.log(parsedData);
         this.setState({articles:parsedData.articles,totalResults:parsedData.totalResults,loading:false,page:1})
+        this.props.setprogress(100);
+
 
         
 
@@ -189,8 +200,8 @@ export class News extends Component {
         <div className="container my-1">
         
         <div className="row">
-        {this.state.articles.map((element)=>{
-            return <div className="col-md-4" >
+        {this.state.articles.map((element,index)=>{
+            return <div className="col-md-4" key={index}>
             <Newsitem  title={element.title?element.title:""} description={element.description?element.description:""} imageurl={element.urlToImage}
             newsurl={element.url} author={element.author} date={element.publishedAt} source={element.source.name}/>
         </div>
