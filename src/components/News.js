@@ -1,5 +1,6 @@
 // rce
-import React, { Component } from 'react'
+import React,{useEffect,useState} from 'react'
+
 import Newsitem from './Newsitem'
 import Spinner from './Spinner';
 import PropTypes from 'prop-types'
@@ -8,199 +9,211 @@ import InfiniteScroll from "react-infinite-scroll-component";
 
 // import {Link} from 'react-router-dom';
 
-export class News extends Component {
-    static defaultProps={
-        country:'in',
-        pageSize:8,
-        category:'general'
-        
-    }
-    static propTypes={
-        country:PropTypes.string,
-        pageSize:PropTypes.number,
-        category:PropTypes.string
-    }
-    capitalfirstletter=(string)=>{
+const News =(props)=> {
+    const [articles, setArticles] = useState([])
+    const [loading, setLoading] = useState(false)
+    const [page, setPage] = useState(1)
+    const [totalResults, setTotalResults] = useState(0)
+    const [search, setSearch] = useState(false)
+    const [inputvalue, setinputvalue] = useState('')
+
+
+    
+    const capitalfirstletter=(string)=>{
         return string.charAt(0).toUpperCase()+string.slice(1)
     }
 
-    constructor(props){
-        super(props);
-        console.log("hello i am a constructor from news component")
-        this.state={
-            articles:[],
-            loading:false,
-            page:1,
-            totalResults:0,
-            search:false
-        }
-        document.title=`${this.capitalfirstletter(this.props.category)} - NewsMonkey`;
-    }
-    async UpdateNews(){
+    
+   const UpdateNews=async()=>{
         
-        if (this.count) {
-             console.log('page length'+this.state.page)
+        if (search) {
+             console.log('page length'+page)
 
             console.log("count")
-            let url=`https://newsapi.org/v2/everything?q=${this.inpval}&apiKey=${this.props.apiKey}&page=${this.state.page}&pagesize=${this.props.pageSize}`;
-            this.setState({loading:true})
+            let url=`https://newsapi.org/v2/everything?q=${inputvalue}&apiKey=${props.apiKey}&page=${page}&pagesize=${props.pageSize}`;
+            // setState({loading:true})
+            setLoading(true)
+
             let data= await fetch(url)
             let parsedData=await data.json()
             // console.log(parsedData);
-            this.setState({
-                articles:parsedData.articles,
-                loading:false
-            })
+            setArticles(parsedData.articles)
+            setLoading(false)
+        
+            
 
         }
         else{
-        const url=`https://newsapi.org/v2/top-headlines?country=${this.props.country}&category=${this.props.category}&apiKey=${this.props.apiKey}&page=${this.state.page}&pageSize=${this.props.pageSize}`;
+        const url=`https://newsapi.org/v2/top-headlines?country=${props.country}&category=${props.category}&apiKey=${props.apiKey}&page=${page}&pageSize=${props.pageSize}`;
         
-        this.setState({loading:true})
+        // setState({loading:true})
+        setLoading(true)
         let data= await fetch(url)
+        props.setprogress(60);
+
         let parsedData=await data.json()
         // console.log(parsedData);
-        this.setState({
-            articles:parsedData.articles,
-            loading:false,
-            totalResults:parsedData.totalResults
-        })}
+        setArticles(parsedData.articles)
+        setLoading(false)
+        setTotalResults(parsedData.totalResults)
+        props.setprogress(100);
 
 
-    }
-    async componentDidMount(){
-        this.props.setprogress(10);
-        
-        let url=`https://newsapi.org/v2/top-headlines?country=${this.props.country}&category=${this.props.category}&apiKey=${this.props.apiKey}&page=1&pageSize=${this.props.pageSize}`;
-        this.setState({loading:true})
-
-        let data= await fetch(url)
-        this.props.setprogress(60);
-
-        let parsedData=await data.json()
-        console.log(parsedData);
-        this.setState({articles:parsedData.articles,totalResults:parsedData.totalResults,loading:false})
-        // we can also call the function update news but for understandig purpsose didn't call it
-        this.props.setprogress(100);
-
-    }
-
-    handlePrevClick= async()=>{
-        console.log("previous")
-        await this.setState({
-            page:this.state.page-1
-        })
-        this.UpdateNews()
-
-    }
-    handleNextClick= async()=>{
-
-        console.log("next")
-
-        // console.log(parsedData);
-        await this.setState({
-            page:this.state.page+1
-        })
-        this.UpdateNews();
         }
-     count=false;
-     inpval=''
-     getInputValue=async()=>{
-         this.count=true
+
+
+    }
+    useEffect(() => {
+        document.title=`${capitalfirstletter(props.category)} - NewsMonkey`;
+
+        props.setprogress(10);
+        UpdateNews();
+        // eslint-disable-next-line
+    },[])
+    
+   
+
+    // const handlePrevClick= async()=>{
+    //     console.log("previous")
+        
+    //     setPage(page-1)
+    //     UpdateNews()
+
+    // }
+    // const handleNextClick= async()=>{
+
+    //     console.log("next")
+
+    //     // console.log(parsedData);
+        
+    //     setPage(page+1)
+    //     UpdateNews();
+    //     }
+    
+     
+     const getInputValue=async()=>{
+        
+        
          let inputVal = document.getElementById("inputId").value;
          console.log(inputVal)
-         document.getElementById("heading").innerHTML='NewsMonkey-Top Headlines Related to '+this.capitalfirstletter(inputVal)
-        this.inpval=inputVal
-        // this.setState({search:true})
-        console.log(this.props.pageSize)
-        console.log('page length'+this.state.page)
-        this.props.setprogress(10);
+         document.getElementById("heading").innerHTML='NewsMonkey-Top Headlines Related to '+capitalfirstletter(inputVal)
         
-        let url=`https://newsapi.org/v2/everything?q=${inputVal}&apiKey=${this.props.apiKey}&page=${this.state.page}&pagesize=${this.props.pageSize}`;
-        this.setState({loading:true})
+        setSearch(true)
+        setinputvalue(inputVal)
+        // setState({search:true})
+        console.log(props.pageSize)
+        console.log('page length'+page)
+        props.setprogress(10);
+        
+        let url=`https://newsapi.org/v2/everything?q=${inputVal}&apiKey=${props.apiKey}&page=1&pagesize=${props.pageSize}`;
+        // setState({loading:true})
+        setLoading(true)
+
+        
 
         let data= await fetch(url)
-        this.props.setprogress(60);
+        props.setprogress(60);
 
         let parsedData=await data.json()
         console.log(parsedData);
-        this.setState({articles:parsedData.articles,totalResults:parsedData.totalResults,loading:false,page:1})
-        this.props.setprogress(100);
+        
+        setArticles(parsedData.articles)
+        setLoading(false)
+        setTotalResults(parsedData.totalResults)
+        setPage(1)
+        // setState({articles:parsedData.articles,totalResults:parsedData.totalResults,loading:false,page:1})
+        props.setprogress(100);
 
 
         
 
     }
-    fetchMoreData = async() => {
-        if (this.count) {
-            await this.setState({
-                page:this.state.page+1
-            })
-            let url=`https://newsapi.org/v2/everything?q=${this.inpval}&apiKey=${this.props.apiKey}&page=${this.state.page+1}&pagesize=${this.props.pageSize}`;
-            this.setState({loading:true})
+    const fetchMoreData = async() => {
+        if (search) {
+            // await setState({
+            //     page:state.page+1
+            // })
+            console.log(page)
+            setPage(page+1)
+            const url=`https://newsapi.org/v2/everything?q=${inputvalue}&apiKey=${props.apiKey}&page=${page+1}&pagesize=${props.pageSize}`;
+           setLoading(true)
+            // setState({loading:true})
             let data= await fetch(url)
             let parsedData=await data.json()
             // console.log(parsedData);
             
         console.log(parsedData);
-        console.log(this.state.articles.length)
-        console.log(this.state.totalResults)
-            this.setState({
-                articles:this.state.articles.concat(parsedData.articles),
-                loading:false,
-                totalResults:parsedData.totalResults
-            })
+        console.log(articles.length)
+        console.log(totalResults)
+        
+        setArticles(articles.concat(parsedData.articles))
+        setLoading(false)
+        setTotalResults(parsedData.totalResults)
+            // setState({
+            //     articles:state.articles.concat(parsedData.articles),
+            //     loading:false,
+            //     totalResults:parsedData.totalResults
+            // })
 
         }
         else{    
         
-        await this.setState({
-            page:this.state.page+1
-        })
-        const url=`https://newsapi.org/v2/top-headlines?country=${this.props.country}&category=${this.props.category}&apiKey=${this.props.apiKey}&page=${this.state.page+1}&pageSize=${this.props.pageSize}`;
+        // await setState({
+        //     page:state.page+1
+        // })
+        console.log('i am in else')
+        setPage(page+1)
+        const url=`https://newsapi.org/v2/top-headlines?country=${props.country}&category=${props.category}&apiKey=${props.apiKey}&page=${page+1}&pageSize=${props.pageSize}`;
         
-        this.setState({loading:true})
+        // setState({loading:true})
+        setLoading(true)
+        console.log("value of search",search)
         let data= await fetch(url)
         let parsedData=await data.json()
         console.log(parsedData);
-        console.log(this.state.articles.length)
-        console.log(this.state.totalResults)
+        console.log(articles.length)
+        console.log(totalResults)
 
-        this.setState({
-            articles:this.state.articles.concat(parsedData.articles),
-            loading:false,
-            totalResults:parsedData.totalResults
-        })}
+        
+        setArticles(articles.concat(parsedData.articles))
+        setLoading(false)
+        setTotalResults(parsedData.totalResults)
+        // setState({
+        //     articles:state.articles.concat(parsedData.articles),
+        //     loading:false,
+        //     totalResults:parsedData.totalResults
+        // })
+    }
       };
     
 
     
-  render() {
+  
     return (
         <>
         <Navbar searchengine={<form className="d-flex" role="search">
 
 <input className="form-control me-2" type="search" id='inputId' placeholder="Search"  aria-label="Search" autoComplete="off"/>
-<button className="btn btn-outline-light"  type="button" onClick={this.getInputValue}>Search</button>
+<button className="btn btn-outline-light"  type="button" onClick={getInputValue}>Search</button>
 </form>
 }/>
       
       
-        <h1 className='text-center' style={{margin:'30px'}} id='heading'>NewsMonkey-Top {this.capitalfirstletter(this.props.category)} Headlines</h1>
-        {this.state.loading &&<Spinner/>}
+        <h1 className='text-center' style={{margin:'30px',marginTop:'90px'}} id='heading'>NewsMonkey-Top {capitalfirstletter(props.category)} Headlines</h1>
+        {loading &&<Spinner/>}
        
 
         <InfiniteScroll
-          dataLength={this.state.articles.length}
-          next={this.fetchMoreData}
-          hasMore={this.state.articles.length!==this.state.totalResults}
+          dataLength={articles.length}
+          next={fetchMoreData}
+          hasMore={articles.length!==totalResults}
           loader={<Spinner/>}
         >
         
         <div className="container my-1">
         
         <div className="row">
-        {this.state.articles.map((element,index)=>{
+        {articles.map((element,index)=>{
             return <div className="col-md-4" key={index}>
             <Newsitem  title={element.title?element.title:""} description={element.description?element.description:""} imageurl={element.urlToImage}
             newsurl={element.url} author={element.author} date={element.publishedAt} source={element.source.name}/>
@@ -208,22 +221,33 @@ export class News extends Component {
         
 
         })}
-        {!this.state.loading&&this.state.totalResults<=0 && <h1 className='text-center'>NO RESULT</h1>}
+        {!loading&&totalResults<=0 && <h1 className='text-center'>NO RESULT</h1>}
         </div>
          </div>
 
         </InfiniteScroll>
 
-        {/* {!this.state.loading&&this.state.totalResults>0 && <div className="container d-flex justify-content-between">
-        <button disabled={this.state.page<=1} type="button" className="btn btn-dark" onClick={this.handlePrevClick}>  &larr;	Previous</button>
-        <button disabled={this.state.page+1>Math.ceil(this.state.totalResults/this.props.pageSize)} type="button" className="btn btn-dark" onClick={this.handleNextClick}>Next &rarr;	</button>
+        {/* {!state.loading&&state.totalResults>0 && <div className="container d-flex justify-content-between">
+        <button disabled={state.page<=1} type="button" className="btn btn-dark" onClick={handlePrevClick}>  &larr;	Previous</button>
+        <button disabled={state.page+1>Math.ceil(state.totalResults/props.pageSize)} type="button" className="btn btn-dark" onClick={handleNextClick}>Next &rarr;	</button>
 
             
         </div>} */}
         
       </>
     )
-  }
+  
+}
+News.defaultProps={
+    country:'in',
+    pageSize:8,
+    category:'general'
+    
+}
+News.propTypes={
+    country:PropTypes.string,
+    pageSize:PropTypes.number,
+    category:PropTypes.string
 }
 
 export default News
